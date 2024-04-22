@@ -1,4 +1,7 @@
-import { createSignal, type Component } from 'solid-js';
+import { For, Match, Show, Switch, createSignal, type Component } from 'solid-js';
+import { Square, SquareState } from './Square';
+import { GameState, SpaceState, SpaceTypes, SquareLike } from '../model';
+import { usePlayer } from '../Game';
 
 const SOLVED_STATES = [
   [0, 1, 2],
@@ -13,77 +16,94 @@ const SOLVED_STATES = [
   [6, 4, 2],
 ]
 
-enum SpaceState {
-  X,
-  O,
-  EMPTY
-}
+export const Board: SquareLike<BoardState> = (props) => {
 
-enum GameState {
-  PLAYING,
-  WON,
-  DRAW,
-  IDLE
-}
+  const [currentPlayer] = usePlayer();
 
-function getSpaceStateSymbol(state: SpaceState) {
-  switch (state) {
-    case SpaceState.X: return 'X';
-    case SpaceState.O: return 'O';
-    case SpaceState.EMPTY: return ' ';
+  if (currentPlayer == null) {
+    throw new Error('Not in player context');
   }
-}
 
-export const Board: Component = () => {
-
-  const [spaces, setSpaces] = createSignal<SpaceState[]>(new Array(9).fill(SpaceState.EMPTY));
-  const [player, setPlayer] = createSignal<SpaceState>(SpaceState.O);
-  const [gameState, setGameState] = createSignal<GameState>(GameState.IDLE);
-
-  const play = function(index: number) {
-    if (gameState() === GameState.WON || gameState() === GameState.DRAW) {
+  const play = function(played: GameState, index: number) {
+    const state = props.state.state;
+    const children = props.state.children;
+    if (state !== SpaceState.EMPTY) {
       return;
     }
 
-    const currentSpace = spaces()[index];
+    const currentSpace = props.state.children[index];
 
-    if (currentSpace !== SpaceState.EMPTY) {
+    if (currentSpace.state !== SpaceState.EMPTY) {
       return;
       // TODO: Error Message
     }
 
-    const newSpaces = [...spaces()];
-    newSpaces[index] = player();
+    const newSpaces = [...children];
+    newSpaces[index] = {
+      ...played,
+      state: played.state
+    };
 
-    setSpaces(newSpaces);
-    let winner: SpaceState = SpaceState.EMPTY;
+    // setSpaces(newSpaces);
+    let winner: SpaceState | null = null;
     for (const solution of SOLVED_STATES) {
-      if (newSpaces[solution[0]] === newSpaces[solution[1]] && newSpaces[solution[0]] === newSpaces[solution[2]]) {
-        winner = newSpaces[solution[0]];
+      const firstSpaceState = newSpaces[solution[0]].state;
+      if (firstSpaceState === SpaceState.EMPTY || firstSpaceState === SpaceState.DRAW) {
+        continue;
+      }
+      if (firstSpaceState === newSpaces[solution[1]].state && firstSpaceState === newSpaces[solution[2]].state) {
+        winner = newSpaces[solution[0]].state;
         break;
       }
     }
-    if (winner === SpaceState.EMPTY) {
-      setPlayer(prev => prev === SpaceState.X ? SpaceState.O : SpaceState.X);
-      if (newSpaces.every(val => val !== SpaceState.EMPTY)) {
-        setGameState(GameState.DRAW);
+
+    let newState = {...props.state, children: newSpaces};
+    if (!winner) {
+      if (newSpaces.every(val => val.state !== SpaceState.EMPTY)) {
+        newState.state = SpaceState.DRAW
       } else {
-        setGameState(GameState.PLAYING);
+        newState.state = SpaceState.EMPTY
       }
     } else {
-      setGameState(GameState.WON);
+      newState.state = winner
     }
 
-    console.log(GameState[gameState()]);
-    console.log(SpaceState[player()]);
-
+    props.onplayed(newState);
   };
 
   return (
-    <div class="grid grid-cols-3 auto-rows-fr h-full w-full">{
-      spaces().map((val, i) => <button class="hover:bg-white hover:bg-opacity-30 border text-6xl font-semibold text-center" onclick={() => play(i)}>{getSpaceStateSymbol(val)}</button>)
-    }</div>
-
+    <div class="grid grid-cols-3 auto-rows-fr h-full w-full p-4 relative">
+      <For each={props.state.children}>{(val, i) => 
+        <Switch fallback={<Square state={val as SquareState} onplayed={(state) => play(state, i())}/>}>
+          <Match when={val.type === SpaceTypes.BOARD}>
+              <Board state={val as BoardState} onplayed={(state) => play(state, i())}/>
+          </Match>
+        </Switch>
+      }</For>
+      <Show when={props.state.state !== SpaceState.EMPTY}>
+        <div class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-35 flex items-center justify-center">
+          <Switch>
+            <Match when={props.state.state === SpaceState.X}>
+              <div class="h-5/6 w-5/6 rotate-45 grid grid-cols-[1fr_1fr] auto-rows-fr">
+                <div class="border-r border-b"></div>
+                <div class="border-l border-b"></div>
+                <div class="border-r border-t"></div>
+                <div class="border-l border-t"></div>
+              </div>
+            </Match>
+            <Match when={props.state.state === SpaceState.O}>
+              <div class="h-5/6 w-5/6 border-2 rounded-full"></div>
+            </Match>
+          </Switch>
+        </div>
+      </Show>
+    </div>
   );
 };
 
+export interface BoardState extends GameState {
+  type: SpaceTypes.BOARD,
+  state: SpaceState,
+  children: GameState[];
+  id: string;
+}
