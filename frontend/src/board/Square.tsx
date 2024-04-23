@@ -1,6 +1,8 @@
 import { GameState, SpaceState, SpaceTypes, SquareLike } from "../model";
 import { usePlayer } from "../Game";
 import { Match, Switch } from "solid-js";
+import cross from '/src/assets/cross.svg'
+import circle from '/src/assets/circle.svg'
 
 export const Square: SquareLike<SquareState> = (props) => {
 
@@ -12,18 +14,17 @@ export const Square: SquareLike<SquareState> = (props) => {
 
   return (
     <button onclick={() => props.onplayed({...props.state, state: currentPlayer()})}
-      class="hover:bg-white hover:bg-opacity-30 border flex justify-center items-center">
+      class="hover:bg-white hover:bg-opacity-30 flex justify-center items-center">
       <Switch fallback={<div></div>}>
         <Match when={props.state.state === SpaceState.X}>
-          <div class="h-5/6 w-5/6 rotate-45 grid grid-cols-[1fr_1fr] auto-rows-fr">
-            <div class="border-r border-b"></div>
-            <div class="border-l border-b"></div>
-            <div class="border-r border-t"></div>
-            <div class="border-l border-t"></div>
+          <div class="h-4/6 w-4/6">
+            <img src={cross} alt="cross" class="object-contain w-full h-full"/>
           </div>
         </Match>
         <Match when={props.state.state === SpaceState.O}>
-          <div class="h-5/6 w-5/6 border-2 rounded-full"></div>
+          <div class="h-4/6 w-4/6">
+            <img src={circle} alt="circle" class="object-contain w-full h-full"/>
+          </div>
         </Match>
       </Switch>
     </button>
