@@ -22,58 +22,9 @@ const SOLVED_STATES = [
 
 export const Board: SquareLike<BoardState> = (props) => {
 
-  const [currentPlayer] = usePlayer();
-
-  if (currentPlayer == null) {
-    throw new Error('Not in player context');
+  const play = (played: GameState, move: string) => {
+    props.onplayed(props.state.play(played, move), move)
   }
-
-  const play = function(played: GameState, index: number) {
-    const state = props.state.state;
-    const children = props.state.children;
-    if (state !== SpaceState.EMPTY) {
-      return;
-    }
-
-    const currentSpace = props.state.children[index];
-
-    if (currentSpace.state !== SpaceState.EMPTY) {
-      return;
-      // TODO: Error Message
-    }
-
-    const newSpaces = [...children];
-    newSpaces[index] = {
-      ...played,
-      state: played.state
-    };
-
-    // setSpaces(newSpaces);
-    let winner: SpaceState | null = null;
-    for (const solution of SOLVED_STATES) {
-      const firstSpaceState = newSpaces[solution[0]].state;
-      if (firstSpaceState === SpaceState.EMPTY || firstSpaceState === SpaceState.DRAW) {
-        continue;
-      }
-      if (firstSpaceState === newSpaces[solution[1]].state && firstSpaceState === newSpaces[solution[2]].state) {
-        winner = newSpaces[solution[0]].state;
-        break;
-      }
-    }
-
-    let newState = {...props.state, children: newSpaces};
-    if (!winner) {
-      if (newSpaces.every(val => val.state !== SpaceState.EMPTY)) {
-        newState.state = SpaceState.DRAW
-      } else {
-        newState.state = SpaceState.EMPTY
-      }
-    } else {
-      newState.state = winner
-    }
-
-    props.onplayed(newState);
-  };
 
   return (
     <div class="p-4 w-full h-full relative">
@@ -82,10 +33,10 @@ export const Board: SquareLike<BoardState> = (props) => {
       </div>
       {/* <img src={bg} class={`pointer-events-none absolute top-0 left-0 w-full h-full ${styles.background_board}`}/> */}
       <div class="grid grid-cols-3 auto-rows-fr h-full w-full">
-        <For each={props.state.children}>{(val, i) => 
-          <Switch fallback={<Square state={val as SquareState} onplayed={(state) => play(state, i())}/>}>
+        <For each={props.state.children}>{(val, _) => 
+          <Switch fallback={<Square state={val as SquareState} onplayed={(state, move) => play(state, move)}/>}>
             <Match when={val.type === SpaceTypes.BOARD}>
-                <Board state={val as BoardState} onplayed={(state) => play(state, i())}/>
+                <Board state={val as BoardState} onplayed={(state, move) => play(state, move)}/>
             </Match>
           </Switch>
         }</For>
@@ -110,9 +61,77 @@ export const Board: SquareLike<BoardState> = (props) => {
   );
 };
 
-export interface BoardState extends GameState {
-  type: SpaceTypes.BOARD,
-  state: SpaceState,
-  children: GameState[];
-  id: string;
+export class BoardState implements GameState {
+  readonly type = SpaceTypes.BOARD;
+  readonly state: SpaceState;
+  readonly children: GameState[];
+  readonly id: string;
+
+  play(move: string, _player: SpaceState, childState: GameState): BoardState {
+    if (!childState) {
+      throw new Error("invalid move");
+    }
+    const state = this.state;
+    const children = this.children;
+    if (state !== SpaceState.EMPTY) {
+      throw new Error("Board is not empty")
+    }
+
+    const index = parseInt(move.replace(this.id, '').split('-')[0]) - 1;
+
+    const currentSpace = this.children[index];
+
+    if (currentSpace.state !== SpaceState.EMPTY) {
+      throw new Error("Tried to do move on non empty space")
+    }
+
+    const newSpaces = [...children];
+    newSpaces[index] = {
+      ...childState,
+    };
+
+    // setSpaces(newSpaces);
+    let winner: SpaceState | null = null;
+    for (const solution of SOLVED_STATES) {
+      const firstSpaceState = newSpaces[solution[0]].state;
+      if (firstSpaceState === SpaceState.EMPTY || firstSpaceState === SpaceState.DRAW) {
+        continue;
+      }
+      if (firstSpaceState === newSpaces[solution[1]].state && firstSpaceState === newSpaces[solution[2]].state) {
+        winner = newSpaces[solution[0]].state;
+        break;
+      }
+    }
+
+    let newState = this.state;
+    if (!winner) {
+      if (newSpaces.every(val => val.state !== SpaceState.EMPTY)) {
+        newState = SpaceState.DRAW
+      } else {
+        newState = SpaceState.EMPTY
+      }
+    } else {
+      newState = winner
+    }
+
+    return new BoardState(this.id, newSpaces, newState);
+  };
+  constructor(id: string, children: GameState[], state?: SpaceState) {
+    this.id = id;
+    if (children.length !== 9) {
+      throw new Error("Children length must be 9");
+    }
+    this.children = children;
+    this.state = state ?? SpaceState.EMPTY;
+  }
+
+  withState(state: SpaceState) {
+    return new BoardState(this.id, this.children, state);
+  }
+
+  withChildren(children: GameState[]) {
+    return new BoardState(this.id, children, this.state);
+  }
 }
+
+

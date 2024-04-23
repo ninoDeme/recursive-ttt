@@ -12,8 +12,14 @@ export const Square: SquareLike<SquareState> = (props) => {
     throw new Error('Not in player context');
   }
 
+  const play = () => {
+    const newSquare = props.state.play(props.state.id, currentPlayer());
+
+    props.onplayed(newSquare, newSquare.id);
+  }
+
   return (
-    <button onclick={() => props.onplayed({...props.state, state: currentPlayer()})}
+    <button onclick={play}
       class="hover:bg-white hover:bg-opacity-30 flex justify-center items-center">
       <Switch fallback={<div></div>}>
         <Match when={props.state.state === SpaceState.X}>
@@ -31,10 +37,25 @@ export const Square: SquareLike<SquareState> = (props) => {
   );
 };
 
-export interface SquareState extends GameState {
-  type: SpaceTypes.SQUARE,
-  state: SpaceState,
-  children: [];
-  _parent?: GameState;
-  id: string;
+export class SquareState implements GameState {
+  readonly type = SpaceTypes.SQUARE;
+  readonly state: SpaceState;
+  readonly id: string;
+
+  play(move: string, player: SpaceState): SquareState {
+    if (this.id !== move) {
+      throw new Error("invalid move")
+    }
+    return this.withState(player);
+  };
+
+  constructor(id: string, state?: SpaceState) {
+    this.id = id;
+    this.state = state ?? SpaceState.EMPTY;
+  }
+
+  withState(state: SpaceState) {
+    return new SquareState(this.id, state);
+  }
+
 }

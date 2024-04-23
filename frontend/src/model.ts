@@ -13,10 +13,12 @@ export enum SpaceTypes {
 }
 
 export interface GameState {
-  type: SpaceTypes,
-  state: SpaceState,
-  children: GameState[];
-  id: string;
+  readonly type: SpaceTypes,
+  readonly state: SpaceState,
+  readonly children?: GameState[];
+  readonly id: string;
+
+  play(move: string, player: SpaceState, childState?: GameState): GameState;
 }
 
 // export enum GameState {
@@ -25,4 +27,4 @@ export interface GameState {
 //   IDLE
 // }
 
-export type SquareLike<T extends GameState> = Component<{onplayed: (state: GameState) => unknown, state: T}>
+export type SquareLike<T extends GameState> = Component<{onplayed: (state: GameState, move: string) => unknown, state: T}>

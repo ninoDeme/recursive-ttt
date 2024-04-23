@@ -6,21 +6,13 @@ import { SquareState } from "./board/Square";
 const PlayerContext = createContext<[() => SpaceState, (val: SpaceState) => void]>();
 
 export const Game: Component<{ player: SpaceState }> = (props) => {
-  const [currentGameState, setGameState] = createSignal<GameState>({
-    type: SpaceTypes.BOARD,
-    state: SpaceState.EMPTY,
-    id: "",
-    children: Array(9).fill(null).map((_, i) => ({
-      type: SpaceTypes.BOARD,
-      state: SpaceState.EMPTY,
-      id: `${i}`,
-      children: Array(9).fill(null).map((_, j) => ({
-        type: SpaceTypes.SQUARE,
-        state: SpaceState.EMPTY,
-        id: `${i},${j}`,
-      } as SquareState))
-    } as BoardState)),
-  });
+  const [currentGameState, setGameState] = createSignal<GameState>(new BoardState(
+    "",
+    Array(9).fill(null).map((_, i) => (new BoardState(
+      `${i+1}`,
+      Array(9).fill(null).map((_, j) => new SquareState(`${i+1}-${j+1}`)),
+    )),
+  )))
 
   const [currentPlayer, setPlayer] = createSignal<SpaceState>(
     props.player || SpaceState.X,
@@ -33,7 +25,8 @@ export const Game: Component<{ player: SpaceState }> = (props) => {
 
   const [winner, setWinner] = createSignal<SpaceState>(SpaceState.EMPTY);
 
-  const play = function (state: GameState) {
+  const onplay = function (state: GameState, move: string) {
+    console.log(move);
     setWinner(state.state);
     setGameState(state);
     if (state.state === SpaceState.DRAW) {
@@ -45,9 +38,13 @@ export const Game: Component<{ player: SpaceState }> = (props) => {
     }
   };
 
+  const playmove = (move: string) => {
+     
+  }
+
   return (
     <PlayerContext.Provider value={player}>
-      <Board state={currentGameState() as BoardState} onplayed={play}/>
+      <Board state={currentGameState() as BoardState} onplayed={onplay}/>
     </PlayerContext.Provider>
   );
 };
