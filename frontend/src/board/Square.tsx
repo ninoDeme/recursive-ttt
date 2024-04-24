@@ -1,6 +1,6 @@
-import { GameComponent, SpaceState, GameComponentType, SquareLike, componentPlay } from "../model";
+import { GameComponent, SpaceState, GameComponentType, SquareLike, componentPlay, registerComponent } from "../model";
 import { useMoveHistory } from "../Game";
-import { Match, Switch, createEffect } from "solid-js";
+import { Match, Switch } from "solid-js";
 import cross from '/src/assets/cross.svg'
 import circle from '/src/assets/circle.svg'
 
@@ -37,5 +37,13 @@ export const squareComponentPlay: componentPlay<SquareComponent> = (component: S
   if (component.id !== moves[moves.length-1]) {
     throw new Error("invalid move")
   }
+  if (component.state !== SpaceState.EMPTY) {
+    throw new Error("invalid move")
+  }
   return {...component, state: moves.length & 1 ? SpaceState.X : SpaceState.O};
 };
+
+registerComponent(GameComponentType.SQUARE, (_rules) => ({
+  play: squareComponentPlay,
+  childrenLength: 0,
+}))

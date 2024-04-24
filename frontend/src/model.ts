@@ -1,6 +1,4 @@
 import { Component } from "solid-js";
-import { SquareComponent, squareComponentPlay } from "./board/Square";
-import { BoardComponent, boardComponentPlay } from "./board/Board";
 
 export enum SpaceState {
   X = 'X',
@@ -18,16 +16,7 @@ export function registerComponent<T extends GameComponent>(id: string, data: (ru
   _componentsData[id] = data;
 }
 
-const _componentsData: Record<string, (rules: GameRules) => GameComponentData<any>> = {
-  [GameComponentType.SQUARE]: (_rules) => ({
-    play: squareComponentPlay,
-    childrenLength: 0,
-  }),
-  [GameComponentType.BOARD]: (rules) => ({
-    play: boardComponentPlay(rules),
-    childrenLength: 9,
-  })
-}
+const _componentsData: Record<string, (rules: GameRules) => GameComponentData<any>> = {}
 
 export interface GameComponentData<T extends GameComponent> {
     play: componentPlay<T>,

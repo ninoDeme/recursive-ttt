@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch } from 'solid-js';
 import { Square, SquareComponent } from './Square';
-import { GameComponent, SpaceState, GameComponentType, SquareLike, componentPlay, GameRules } from '../model';
+import { GameComponent, SpaceState, GameComponentType, SquareLike, componentPlay, GameRules, registerComponent } from '../model';
 import styles from './Board.module.css';
 import cross from '/src/assets/cross.svg'
 import circle from '/src/assets/circle.svg'
@@ -155,3 +155,7 @@ export const boardComponentPlay: (rules: GameRules) => componentPlay<BoardCompon
   };
 };
 
+registerComponent(GameComponentType.BOARD, (rules) => ({
+    play: boardComponentPlay(rules),
+    childrenLength: 9,
+}))
