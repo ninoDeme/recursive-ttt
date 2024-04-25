@@ -1,4 +1,4 @@
-import { Component, createContext, createSignal, useContext } from "solid-js";
+import { Component, createContext, createEffect, createSignal, useContext } from "solid-js";
 import { GameComponent, GameComponentType, GameRules, SpaceState, constructGameState, play } from "./model";
 import { Board, BoardComponent } from "./board/Board";
 
@@ -18,6 +18,7 @@ export const Game: Component<Partial<GameRules> & {ongameend?: (result: SpaceSta
 
   const [currMoveHistory, setMoveHistory] = createSignal<string[]>([]);
 
+  createEffect(() => console.log(currMoveHistory()));
   const moveHistory: [() => string[], (move: string) => void] = [
     currMoveHistory,
     (move: string) => {
@@ -75,9 +76,9 @@ export const Game: Component<Partial<GameRules> & {ongameend?: (result: SpaceSta
       return previousState;
     }
 
-    let ids = move.split('-').filter(x => !!x).map(x => Number(x));
+    let ids = move.split('-').filter(x => !!x).map(x => Number(x)).slice(1);
 
-    let currentComponent = currentGameState();
+    let currentComponent = previousState;
     let componentStack = [currentComponent];
     for (const id of ids) {
       if (isNaN(id)) {

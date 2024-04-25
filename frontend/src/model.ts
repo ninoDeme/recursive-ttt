@@ -46,9 +46,9 @@ export function constructGameState(rules: GameRules, components?: GameComponentT
   return {
     type: components[0],
     state: SpaceState.EMPTY,
-    id: id ?? "",
+    id: id ?? "1",
     children: components.length > 1 ? new Array(length).fill(null).map((_, i) => {
-      return constructGameState(rules, components.slice(1), id ? id + "-" + (i + 1) : (i + 1).toString())
+      return constructGameState(rules, components.slice(1), `${id ?? "1"}-${i + 1}`)
     }) : undefined
   }
 }
