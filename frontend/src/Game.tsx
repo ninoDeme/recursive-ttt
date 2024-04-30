@@ -27,10 +27,12 @@ export const Game: Component<Partial<GameRules> & {ongameend?: (result: SpaceSta
 
       if (newGameState !== currentGameState() && describeComponent(newGameState) !== describeComponent(currentGameState())) {
         setGameState(newGameState);
+        console.log(describeComponent(newGameState))
         setMoveHistory(moves);
         if (newGameState.state !== SpaceState.EMPTY) {
           props.ongameend?.(newGameState.state, newGameState);
         }
+        fetch("/api/hello/Ricardo", {method: 'GET'}).then(x => x.text()).then(console.log);
       } else {
         console.log("State didn't change");
       }
@@ -39,7 +41,7 @@ export const Game: Component<Partial<GameRules> & {ongameend?: (result: SpaceSta
 
   const describeComponent = (component: GameComponent, i: number = 0): string => {
     const depth = component.id.split('-').filter(x => !!x).length;
-    return "".padStart(depth*2, " ") + `${i}: ` + component.type + ` (${component.state})` + (component.children?.length ? ` {\n${component.children.map(describeComponent).join("")}${"".padStart(depth*2, " ")}}` : '') + ',\n'
+    return `${"".padStart(depth * 2, " ")}${i}: ${component.type} (${component.state}) [${component.children?.length ? `\n${component.children.map(describeComponent).join("")}${"".padStart(depth * 2, " ")}` : ''}],\n`
   }
 
   const gameStateP: [(id: string) => GameComponent | null] = [
