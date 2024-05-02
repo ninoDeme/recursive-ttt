@@ -32,7 +32,7 @@ export const Game: Component<Partial<GameRules> & {ongameend?: (result: SpaceSta
         if (newGameState.state !== SpaceState.EMPTY) {
           props.ongameend?.(newGameState.state, newGameState);
         }
-        fetch("/api/hello/Ricardo", {method: 'GET'}).then(x => x.text()).then(console.log);
+        fetch("/api/play", {method: 'POST', body: move}).then(x => x.text()).then(console.log);
       } else {
         console.log("State didn't change");
       }
